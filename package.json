@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev --transpile-only --ignore-watch node_modules src/index.ts"
+    "dev": "ts-node-dev --transpile-only --ignore-watch node_modules src/index.ts",
+    "prod": "tsc --build --clean && tsc && node dist/index.js"
   },
   "keywords": [],
   "author": "",
