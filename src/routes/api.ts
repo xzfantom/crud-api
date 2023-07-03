@@ -1,11 +1,11 @@
 import { router as userRouter } from "./users";
-import { InvalidRequestError } from "./error";
+import { InvalidRequestError } from "../utils/error";
 
-export const router = (req, res, path) => {
+export const router = async (req, res, path) => {
   const nextPath = path.shift();
   switch (nextPath) {
     case "users":
-      userRouter(req, res, path);
+      await userRouter(req, res, path);
       break;
     default:
       throw new InvalidRequestError();

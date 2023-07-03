@@ -1,18 +1,15 @@
-import {
-  createServer as createServerHttp,
-  IncomingMessage,
-  ServerResponse,
-} from "http";
+import { createServer as createServerHttp } from "http";
 import dotenv from "dotenv";
 import { router as apiRouter } from "./routes/api";
-import { CustomError, sendError } from "./routes/error";
+import { CustomError, sendError } from "./utils/error";
+import { HandlerFunction } from "./utils/types";
 
 dotenv.config();
 
 const { PORT } = process.env;
 const port = PORT ?? 4000;
 
-const requestListener = (req: IncomingMessage, res: ServerResponse) => {
+const requestListener: HandlerFunction = async (req, res) => {
   try {
     console.log("Request received", req.url);
     const fullPath = req.url.slice(1).split("/");
@@ -20,7 +17,7 @@ const requestListener = (req: IncomingMessage, res: ServerResponse) => {
     console.log(fullPath, path);
     switch (path) {
       case "api":
-        apiRouter(req, res, fullPath);
+        await apiRouter(req, res, fullPath);
         break;
       default:
         res.writeHead(404);

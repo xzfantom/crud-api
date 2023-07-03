@@ -6,38 +6,46 @@ import {
   UserNotFoundError,
   WrongUserError,
   sendError,
-} from "./error";
+} from "../utils/error";
+import { HandlerFunction, HandlerWithPathFunction } from "../utils/types";
 
-export const router = (
-  req: IncomingMessage,
-  res: ServerResponse,
-  path: Array<string>
-) => {
+const readBody = async (req: IncomingMessage) => {
+  return new Promise((resolve, reject) => {
+    const body = [];
+    req.on("data", (chunk: any) => {
+      body.push(chunk);
+    });
+    req.on("end", () => {
+      const bodyString = Buffer.concat(body).toString();
+      const bodyJSON = JSON.parse(bodyString);
+      resolve(bodyJSON);
+    });
+    req.on("error", () => reject());
+  });
+};
+
+export const router: HandlerWithPathFunction = async (req, res, path) => {
   console.log(`Request received ${req.method}:${req.url}`);
   console.log(path);
   switch (req.method) {
     case "GET":
-      get(req, res, path);
+      await get(req, res, path);
       break;
     case "POST":
-      post(req, res);
+      await post(req, res);
       break;
     case "PUT":
-      put(req, res, path);
+      await put(req, res, path);
       break;
     case "DELETE":
-      del(req, res, path);
+      await del(req, res, path);
       break;
     default:
       throw new InvalidRequestError();
   }
 };
 
-export const get = (
-  req: IncomingMessage,
-  res: ServerResponse,
-  path: Array<string>
-) => {
+export const get: HandlerWithPathFunction = async (req, res, path) => {
   if (path.length === 0) {
     const users = db.getAllUsers();
     res.end(JSON.stringify(users));
@@ -49,82 +57,55 @@ export const get = (
     throw new InvalidIdError();
   }
 
-  const user = db.getUser(id);
-  if (!user) {
-    throw new UserNotFoundError();
-  }
-
+  const user = await db.getUser(id);
   res.end(JSON.stringify(user));
 };
 
-export const post = (req: IncomingMessage, res: ServerResponse) => {
-  new Promise((resolve, reject) => {
-    const body = [];
-    req.on("data", (chunk: any) => {
-      body.push(chunk);
-    });
-    req.on("end", () => {
-      const bodyString = Buffer.concat(body).toString();
-      const bodyJSON = JSON.parse(bodyString);
-      resolve(bodyJSON);
-    });
-    req.on("error", () => reject());
-  })
+export const post: HandlerFunction = async (req, res) => {
+  readBody(req)
     .then((data: unknown) => {
-      if (db.validateUser(data)) {
-        const user = db.createUser(data);
-        res.end(JSON.stringify(user));
-      } else throw new WrongUserError();
+      if (!db.validateUser(data)) {
+        throw new WrongUserError();
+      }
+      return db.createUser(data);
+    })
+    .then((user) => {
+      res.end(JSON.stringify(user));
     })
     .catch((error) => {
       sendError(res, error);
     });
 };
 
-export const put = (
-  req: IncomingMessage,
-  res: ServerResponse,
-  path: Array<string>
-) => {
+export const put: HandlerWithPathFunction = async (req, res, path) => {
   const id = path.shift();
   if (!db.validateId(id)) {
     throw new InvalidIdError();
   }
 
-  new Promise((resolve, reject) => {
-    const body = [];
-    req.on("data", (chunk: any) => {
-      body.push(chunk);
-    });
-    req.on("end", () => {
-      const bodyString = Buffer.concat(body).toString();
-      const bodyJSON = JSON.parse(bodyString);
-      resolve(bodyJSON);
-    });
-    req.on("error", () => reject());
-  })
+  return readBody(req)
     .then((data: unknown) => {
-      if (db.validateUser(data)) {
-        const user = db.updateUser(id, data);
-        res.end(JSON.stringify(user));
-      } else throw new WrongUserError();
+      if (!db.validateUser(data)) {
+        throw new WrongUserError();
+      }
+      return db.updateUser(id, data);
+    })
+    .then((user) => {
+      res.end(JSON.stringify(user));
     })
     .catch((error) => {
       sendError(res, error);
     });
 };
 
-export const del = (
-  req: IncomingMessage,
-  res: ServerResponse,
-  path: Array<string>
-) => {
+export const del: HandlerWithPathFunction = async (req, res, path) => {
   const id = path.shift();
   if (!db.validateId(id)) {
     throw new InvalidIdError();
   }
 
-  db.deleteUser(id);
-  res.statusCode = 204;
-  res.end("User deleted");
+  db.deleteUser(id).then(() => {
+    res.statusCode = 204;
+    res.end("User deleted");
+  });
 };
