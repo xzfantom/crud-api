@@ -4,6 +4,16 @@
 
 Your task is to implement simple CRUD API using in-memory database underneath.
 
+Webserver can be started with next scripts:
+
+- `npm run start:dev`
+  Starts server in development mode with hot reload feature
+
+- `npm run start:prod`
+  Builds project in dist folder and starts it
+
+Webserver is started with port specified in environmental variable PORT or at 4000 by default
+
 ## Technical requirements
 
 - Task can be implemented on Javascript or Typescript
