@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev --transpile-only --ignore-watch node_modules src/index.ts",
-    "prod": "tsc --build --clean && tsc && node dist/index.js"
+    "start:dev": "ts-node-dev --transpile-only --ignore-watch node_modules src/index.ts",
+    "start:prod": "tsc --build --clean && tsc && node dist/index.js"
   },
   "keywords": [],
   "author": "",
